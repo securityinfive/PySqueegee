@@ -8,6 +8,4 @@ ______      _____
       |___/          |_|                |___/           
 
 
-
-
 PySqueegee Readme... coming soon.
