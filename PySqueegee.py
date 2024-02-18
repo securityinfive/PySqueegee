@@ -323,6 +323,7 @@ def main():
 if __name__ == "__main__":
     print("Hello and welcome.")
     print("Test one more.")
+    print("ahhhhh")
     print("It's time to check your system.")
     main()
 
