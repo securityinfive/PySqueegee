@@ -1,5 +1,13 @@
 # move the imports to each function if only used there?
-import psutil, winreg, platform, socket, uuid, os, re, subprocess, platform, GPUtil
+import psutil 
+import winreg
+import platform
+import socket
+import uuid
+import os
+import re
+import subprocess
+import GPUtil
 
 from datetime import datetime
 from tabulate import tabulate
@@ -184,7 +192,8 @@ def get_services(report_name):
         write_report("\n", report_name)
 
 def win_registry(report_name):
-    print_header("SERVICES")
+    print_header("START UP APPS")
+    write_header("STARTUP APPS")
     
     # Registry
     # winreg
@@ -394,9 +403,9 @@ def main():
     
     #get_platform(report_file)
     #get_os(report_file)
-    get_services(report_file)
+    #get_services(report_file)
     #cpu_read(report_file)
-    #win_registry(report_file)
+    win_registry(report_file)
     #get_installed_apps()
     #get_disk()
     #get_network()
