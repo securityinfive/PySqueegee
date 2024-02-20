@@ -193,7 +193,7 @@ def get_services(report_name):
 
 def win_registry(report_name):
     print_header("START UP APPS")
-    write_header("STARTUP APPS")
+    write_header("STARTUP APPS", report_name)
     
     # Registry
     # winreg
@@ -205,20 +205,23 @@ def win_registry(report_name):
     reg_HKCU = r"HKEY_CURRENT_USER"
     
     reg_run = r"SOFTWARE\Microsoft\Windows\CurrentVersion\Run"
-    reg_apps = r"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall"
+    #reg_apps = r"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall"
 
     #connecting to key in registry
-    read_reg(reg_HKLM, reg_run)
-    read_reg(reg_HKCU, reg_run)
+    read_reg(reg_HKLM, reg_run, report_name)
+    read_reg(reg_HKCU, reg_run, report_name)
     
     # This one needs to loop through the subkeys
     # read_reg(reg_HKLM, reg_apps)
 
-def read_reg(reg_choice, reg_choice2):
+def read_reg(reg_choice, reg_choice2, report_name):
     # this will work where the keys are in the root of the target you are hitting, need a subkey enumberator for others
     reg_ok = 0
     reg_key = ""
     print(reg_choice, reg_choice2)
+    reg_key = str(reg_choice + " - " + reg_choice2)
+    write_report(reg_key + "\n", report_name)
+
     if reg_choice == "HKEY_CURRENT_USER" and reg_choice2 is not None:
         access_registry = winreg.ConnectRegistry(None,winreg.HKEY_CURRENT_USER)
         reg_key = reg_choice2
@@ -252,6 +255,9 @@ def read_reg(reg_choice, reg_choice2):
     print(tabulate(reg_info.items(), headers=["App Name", "Path"]))
     print("~"*40)
 
+    write_report(tabulate(reg_info.items(), headers=["App Name", "Path"]), report_name)
+    write_report("\n\n", report_name)
+    
 def get_installed_apps():
     print_header("INSTALLED APPS")
     # importing the module 
