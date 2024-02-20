@@ -1,5 +1,6 @@
 # move the imports to each function if only used there?
 import psutil, winreg, platform, socket, uuid, os, re, subprocess, platform, GPUtil
+
 from datetime import datetime
 from tabulate import tabulate
 from pprint import pprint
@@ -9,19 +10,42 @@ def print_header(header):
     print(header)
     print("="*75)    
 
+def write_header(header, report_name):
+    write_report("\n", report_name)
+    write_report("~"*70, report_name)
+    write_report("\n" + header + "\n", report_name)
+    write_report("~"*70, report_name)
+    write_report("\n", report_name)
+
+def get_platform(report_name):
+    print_header("PLATFORM INFO")
+    
+    info={}
+    info['platform']=platform.system()
+    info['platform-release']=platform.release()
+    info['platform-version']=platform.version()
+    info['architecture']=platform.machine()
+    info['hostname']=socket.gethostname()
+    info['ip-address']=socket.gethostbyname(socket.gethostname())
+    info['mac-address']=':'.join(re.findall('..', '%012x' % uuid.getnode()))
+    info['processor']=platform.processor()
+    info['ram']=str(round(psutil.virtual_memory().total / (1024.0 **3)))+" GB"
+    
+    print(tabulate(info.items(), headers=["Name", "Value"]))
+
+    write_header("PLATFORM INFO", report_name)
+    write_report(tabulate(info.items(), headers=["Name", "Value"]), report_name)
+    #write_report("\n", report_name)
+
 def get_os(report_name):
     print_header("OS INFO")
-    write_report("="*70, report_name)
-    write_report("\nOPERATING SYSTEM INFO\n", report_name)
-    write_report("="*70, report_name)
     
     # Last Boot Time
     boot_time_timestamp = psutil.boot_time()
     bt = datetime.fromtimestamp(boot_time_timestamp)
-    print(bt)
     print(f"Last Boot Time: {bt.month}/{bt.day}/{bt.year} {bt.hour}:{bt.minute}:{bt.second}")
-    write_report("\nLast Boot Time : " + str(bt) + "\n", report_name)
-    write_report("~"*40, report_name)
+    write_report("\n\nLast Boot Time : " + str(bt) + "\n", report_name)
+    
 
     # Windws %PATH%
     system_path = os.getenv('PATH')
@@ -29,12 +53,14 @@ def get_os(report_name):
     print()
     print("WINDOWS PATH ENVIRONMENT VARIABLES")
     print("-"*40)
-    write_report("\n\nWINDOWS PATH ENVIRONMENT VARIABLES\n", report_name)
-    write_report("~"*40 + "\n", report_name)
-
+    
+    write_header("WINDOWS PATH ENVIRONMENT VARIABLES", report_name)
+    #write_report("\nWINDOWS PATH ENVIRONMENT VARIABLES\n", report_name)
+    #write_report("~"*40 + "\n", report_name)
+    
     for directory in system_path:
         print(directory)
-        write_report("\n" + directory, report_name)
+        write_report(directory + "\n", report_name)
     print()
 
     print("-"*40)
@@ -50,16 +76,18 @@ def get_os(report_name):
     cpu_list["Current Frequency"] = str(cpufreq.current) + "Mhz"
     print(tabulate(cpu_list.items(), headers=["INFO", "VALUE"]))
     print()
-    write_report("\n" + "~"*40, report_name)
-    write_report("\nCURRENT CPU(s) USE", report_name)
-    write_report("\n" + "~"*40 + "\n", report_name)
-    
-    write_report(tabulate(cpu_list.items(), headers=["INFO", "VALUE"]), report_name)
 
+    write_header("CURRENT CPU(s) USE", report_name)
+    #write_report("~"*40, report_name) # The Path loop above adds \n, don't need to do one again here.
+    #write_report("\nCURRENT CPU(s) USE", report_name)
+    #write_report("\n" + "~"*40 + "\n", report_name)
+    write_report(tabulate(cpu_list.items(), headers=["INFO", "VALUE"]), report_name)
+    write_report("\n", report_name)
 
     print("-"*40)
     print("CURRENT MEMORY USE")
     print("-"*40)
+
     # get the memory details
     svmem = psutil.virtual_memory()
     svmem_list = {}
@@ -70,9 +98,17 @@ def get_os(report_name):
     print(tabulate(svmem_list.items(), headers=["INFO", "VALUE"]))
     print()
 
+    write_header("CURRENT MEMORY USE", report_name)
+    #write_report("~"*40, report_name)
+    #write_report("\nCURRENT MEMORY USE\n", report_name)
+    #write_report("~"*40, report_name)
+    write_report(tabulate(svmem_list.items(), headers=["INFO", "VALUE"]), report_name)
+    write_report("\n", report_name)
+
     print("-"*40)
     print("SWAP MEMORY")
     print("-"*40)
+ 
     # get the swap memory details (if exists)
     swap = psutil.swap_memory()
     swap_list = {}
@@ -83,7 +119,15 @@ def get_os(report_name):
     print(tabulate(swap_list.items(), headers=["INFO", "VALUE"]))
     print()
 
-def cpu_read():
+    write_header("SWAP  MEMORY", report_name)
+    #write_report("~"*40, report_name)
+    #write_report("\nSWAP MEMORY\n", report_name)
+    #write_report("~"*40, report_name)
+    #write_report("\n", report_name)
+    write_report(tabulate(swap_list.items(), headers=["INFO", "VALUE"]), report_name)
+    write_report("\n", report_name)
+
+def cpu_read(report_name):
     print("="*20, " CPU")
     cpu = psutil.cpu_times()
     print(cpu)
@@ -92,39 +136,54 @@ def cpu_read():
     #user = psutil.users()
     #print(user)
     
-def get_services():
-    print_header("SERVICES")
-    print("="*20, " SERVICES")
+def get_services(report_name):
+    print_header("RUNNING SERVICES")
+    write_header("RUNNING SERVICES", report_name)
+
+    svc_dis_name = ""
+    svc_startup = ""
+    svc_descr = ""
+    svc_status = ""
+    svc_bin = ""
+
     svcs = list(psutil.win_service_iter())
-    pprint(svcs)
-      
-def get_platform():
-    print_header("PLATFORM INFO")
-    """     print("="*20, " PLATFORM INFO")
-    print(platform.architecture())
-    print(platform.machine())
-    print(platform.processor())
-    print(platform.release())
-    print(platform.system())
-    print(platform.uname())
-    print(platform.version())
-    print(platform.win32_edition()) """
 
-    # JSON
-    info={}
-    info['platform']=platform.system()
-    info['platform-release']=platform.release()
-    info['platform-version']=platform.version()
-    info['architecture']=platform.machine()
-    info['hostname']=socket.gethostname()
-    info['ip-address']=socket.gethostbyname(socket.gethostname())
-    info['mac-address']=':'.join(re.findall('..', '%012x' % uuid.getnode()))
-    info['processor']=platform.processor()
-    info['ram']=str(round(psutil.virtual_memory().total / (1024.0 **3)))+" GB"
-    
-    print(tabulate(info.items(), headers=["Name", "Value"]))
+    for svc in svcs:
+        svc_info = psutil.win_service_get(svc.name()).as_dict()
+        svc_data = {}
+        for svc_key, svc_item in svc_info.items():
+            if svc_info['status'] == 'running':
+                match svc_key:
+                    case 'display_name':
+                        svc_dis_name = svc_item
+                        svc_data["Display Name"] = svc_item
+                    case 'binpath':
+                        svc_bin = svc_item
+                    case 'start_type':
+                        svc_startup = svc_item
+                        svc_data["Startup"] = svc_item
+                    case 'description':
+                        svc_descr = svc_item
+                        svc_data["Description"] = svc_item
+                    case 'status':
+                        svc_status = svc_item
 
-def win_registry():
+        print(f"Name - ", svc_dis_name)
+        print(f"Binpath - ", svc_bin)
+        print(f"Startup - ", svc_startup)
+        print(f"Status - ", svc_status)
+        print(f"Description - ", svc_descr)
+        print("#"*70)
+        
+        write_report("Name - " + svc_dis_name, report_name)
+        write_report("\nBinpath - " + svc_bin, report_name)
+        write_report("\nStartup - " + svc_startup, report_name)
+        write_report("\nStatus - " + svc_status, report_name)
+        write_report("\nDescription - " + str(svc_descr), report_name)
+        write_report("\n" + "-"*50, report_name)
+        write_report("\n", report_name)
+
+def win_registry(report_name):
     print_header("SERVICES")
     
     # Registry
@@ -331,18 +390,20 @@ def write_report(writeline, report_name):
     report_name.write(writeline)
     
 def main():
-    write_report('Scans started.\n', report_file)
+    write_report('\n\nScans started.\n', report_file)
     
-    get_os(report_file)
-    #cpu_read()
-    #win_registry()
-    #get_platform()
+    #get_platform(report_file)
+    #get_os(report_file)
+    get_services(report_file)
+    #cpu_read(report_file)
+    #win_registry(report_file)
     #get_installed_apps()
     #get_disk()
     #get_network()
     #get_gpu() # NVIDIA ONLY
     #get_running_processes()
     #get_env_var()
+    report_file.close()
     
 if __name__ == "__main__":
     now_time = get_time()
@@ -358,11 +419,11 @@ if __name__ == "__main__":
            __/ |         | |                 __/ |          
           |___/          |_|                |___/           
           """)
-    print(print(report_time, '-', "PySqueegee scans starting."))
+    print(report_time, '-', "PySqueegee scans starting.")
     print("Report file : PySqueegee ", report_time + '.txt')
-    print("Here we go...")
+
     filename = 'PySqueegee ' + report_time + '.txt'
-    report_file = open(filename, 'w')
+    report_file = open(filename, 'w', encoding="utf-8")
     report_file.write(r"""
     ______      _____                                       
     | ___ \    /  ___|                                      
