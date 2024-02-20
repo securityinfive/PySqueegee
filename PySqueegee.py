@@ -1,5 +1,5 @@
 # move the imports to each function if only used there?
-import json, psutil, winreg, platform, socket, uuid, os, getpass, re, subprocess, platform, GPUtil, sys
+import json, psutil, winreg, platform, socket, uuid, os, re, subprocess, platform, GPUtil
 from datetime import datetime
 from tabulate import tabulate
 from pprint import pprint
@@ -7,8 +7,82 @@ from pprint import pprint
 def print_header(header):
     print("="*75)
     print(header)
-    print("="*75)
+    print("="*75)    
+
+def get_os(report_name):
+    print_header("OS INFO")
+    write_report("="*70, report_name)
+    write_report("\nOPERATING SYSTEM INFO\n", report_name)
+    write_report("="*70, report_name)
     
+    # Last Boot Time
+    boot_time_timestamp = psutil.boot_time()
+    bt = datetime.fromtimestamp(boot_time_timestamp)
+    print(bt)
+    print(f"Last Boot Time: {bt.month}/{bt.day}/{bt.year} {bt.hour}:{bt.minute}:{bt.second}")
+    write_report("\nLast Boot Time : " + str(bt) + "\n", report_name)
+    write_report("~"*40, report_name)
+
+    # Windws %PATH%
+    system_path = os.getenv('PATH')
+    system_path = system_path.split(";")
+    print()
+    print("WINDOWS PATH ENVIRONMENT VARIABLES")
+    print("-"*40)
+    write_report("\n\nWINDOWS PATH ENVIRONMENT VARIABLES\n", report_name)
+    write_report("~"*40 + "\n", report_name)
+
+    for directory in system_path:
+        print(directory)
+        write_report("\n" + directory, report_name)
+    print()
+
+    print("-"*40)
+    print("CURRENT CPU(s) USE")
+    print("-"*40)
+    # number of cores
+    cpufreq = psutil.cpu_freq()
+    cpu_list = {}
+    cpu_list["Total Cores"] = psutil.cpu_count(logical=True)  
+    cpu_list["# Physcial Cores"] = psutil.cpu_count(logical=False)    
+    cpu_list["Max. Frequency"] = str(cpufreq.max) + "Mhz"    
+    cpu_list["Min. Frequency"] = str(cpufreq.min) + "Mhz"
+    cpu_list["Current Frequency"] = str(cpufreq.current) + "Mhz"
+    print(tabulate(cpu_list.items(), headers=["INFO", "VALUE"]))
+    print()
+    write_report("\n" + "~"*40, report_name)
+    write_report("\nCURRENT CPU(s) USE", report_name)
+    write_report("\n" + "~"*40 + "\n", report_name)
+    
+    write_report(tabulate(cpu_list.items(), headers=["INFO", "VALUE"]), report_name)
+
+
+    print("-"*40)
+    print("CURRENT MEMORY USE")
+    print("-"*40)
+    # get the memory details
+    svmem = psutil.virtual_memory()
+    svmem_list = {}
+    svmem_list["Total"] = get_size(svmem.total)
+    svmem_list["Free"] = get_size(svmem.available)
+    svmem_list["Used"] = get_size(svmem.used)
+    svmem_list["Percentage"] = str(svmem.percent) + "%"
+    print(tabulate(svmem_list.items(), headers=["INFO", "VALUE"]))
+    print()
+
+    print("-"*40)
+    print("SWAP MEMORY")
+    print("-"*40)
+    # get the swap memory details (if exists)
+    swap = psutil.swap_memory()
+    swap_list = {}
+    swap_list["Total"] = get_size(swap.total)
+    swap_list["Free"] = get_size(swap.free)
+    swap_list["Used"] = get_size(swap.used)
+    swap_list["Percentage"] = str(swap.percent) + "%"
+    print(tabulate(swap_list.items(), headers=["INFO", "VALUE"]))
+    print()
+
 def cpu_read():
     print("="*20, " CPU")
     cpu = psutil.cpu_times()
@@ -141,64 +215,6 @@ def get_size(bytes, suffix="B"):
             return f"{bytes:.2f}{unit}{suffix}"
         bytes /= factor
 
-def get_os():
-    print_header("OS INFO")
-
-    # Last Boot Time
-    boot_time_timestamp = psutil.boot_time()
-    bt = datetime.fromtimestamp(boot_time_timestamp)
-    print(f"Last Boot Time: {bt.month}/{bt.day}/{bt.year} {bt.hour}:{bt.minute}:{bt.second}")
-    
-    # Windws %PATH%
-    system_path = os.getenv('PATH')
-    system_path = system_path.split(";")
-    print()
-    print("WINDOWS PATH ENVIRONMENT VARIABLES")
-    print("-"*40)
-    for directory in system_path:
-        print(directory)
-    print()
-
-    print("-"*40)
-    print("CURRENT CPU(s) USE")
-    print("-"*40)
-    # number of cores
-    cpufreq = psutil.cpu_freq()
-    cpu_list = {}
-    cpu_list["Total Cores"] = psutil.cpu_count(logical=True)  
-    cpu_list["# Physcial Cores"] = psutil.cpu_count(logical=False)    
-    cpu_list["Max. Frequency"] = str(cpufreq.max) + "Mhz"    
-    cpu_list["Min. Frequency"] = str(cpufreq.min) + "Mhz"
-    cpu_list["Current Frequency"] = str(cpufreq.current) + "Mhz"
-    print(tabulate(cpu_list.items(), headers=["INFO", "VALUE"]))
-    print()
-   
-    print("-"*40)
-    print("CURRENT MEMORY USE")
-    print("-"*40)
-    # get the memory details
-    svmem = psutil.virtual_memory()
-    svmem_list = {}
-    svmem_list["Total"] = get_size(svmem.total)
-    svmem_list["Free"] = get_size(svmem.available)
-    svmem_list["Used"] = get_size(svmem.used)
-    svmem_list["Percentage"] = str(svmem.percent) + "%"
-    print(tabulate(svmem_list.items(), headers=["INFO", "VALUE"]))
-    print()
-
-    print("-"*40)
-    print("SWAP MEMORY")
-    print("-"*40)
-    # get the swap memory details (if exists)
-    swap = psutil.swap_memory()
-    swap_list = {}
-    swap_list["Total"] = get_size(swap.total)
-    swap_list["Free"] = get_size(swap.free)
-    swap_list["Used"] = get_size(swap.used)
-    swap_list["Percentage"] = str(swap.percent) + "%"
-    print(tabulate(swap_list.items(), headers=["INFO", "VALUE"]))
-    print()
-      
 def get_disk():
     print("="*20, " DISK INFO")
     print("="*40, "Disk Information", "="*40)
@@ -307,20 +323,31 @@ def get_env_var():
     sys_hold = os.getenv('OS')
     print(sys_hold)
 
+def get_time():
+    now_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    return(now_time)
+
+def write_report(writeline, report_name):
+    report_name.write(writeline)
+    
 def main():
+    write_report('Scans started.\n', report_file)
+    
+    get_os(report_file)
     #cpu_read()
     #win_registry()
     #get_platform()
     #get_installed_apps()
-    #get_os()
-    get_disk()
+    #get_disk()
     #get_network()
     #get_gpu() # NVIDIA ONLY
     #get_running_processes()
     #get_env_var()
-
-
+    
 if __name__ == "__main__":
+    now_time = get_time()
+    report_time = now_time.replace(':' , '')
+
     print(r"""
     ______      _____                                       
     | ___ \    /  ___|                                      
@@ -331,9 +358,8 @@ if __name__ == "__main__":
            __/ |         | |                 __/ |          
           |___/          |_|                |___/           
           """)
-
-    print("It's time to check your system.")
+    print(print(report_time, '-', "PySqueegee scans starting."))
+    print("Report file : PySqueegee ", report_time + '.txt')
+    filename = 'PySqueegee ' + report_time + '.txt'
+    report_file = open(filename, 'w')
     main()
-
-
-# try to write a dynamic tabulate print function, pass in the headers and the data. 
