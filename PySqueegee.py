@@ -1,5 +1,5 @@
 # move the imports to each function if only used there?
-import json, psutil, winreg, platform, socket, uuid, os, re, subprocess, platform, GPUtil
+import psutil, winreg, platform, socket, uuid, os, re, subprocess, platform, GPUtil
 from datetime import datetime
 from tabulate import tabulate
 from pprint import pprint
@@ -360,6 +360,18 @@ if __name__ == "__main__":
           """)
     print(print(report_time, '-', "PySqueegee scans starting."))
     print("Report file : PySqueegee ", report_time + '.txt')
+    print("Here we go...")
     filename = 'PySqueegee ' + report_time + '.txt'
     report_file = open(filename, 'w')
+    report_file.write(r"""
+    ______      _____                                       
+    | ___ \    /  ___|                                      
+    | |_/ /   _\ `--.  __ _ _   _  ___  ___  __ _  ___  ___ 
+    |  __/ | | |`--. \/ _` | | | |/ _ \/ _ \/ _` |/ _ \/ _ \
+    | |  | |_| /\__/ / (_| | |_| |  __/  __/ (_| |  __/  __/
+    \_|   \__, \____/ \__, |\__,_|\___|\___|\__, |\___|\___|
+           __/ |         | |                 __/ |          
+          |___/          |_|                |___/           
+          """)                      
+
     main()
