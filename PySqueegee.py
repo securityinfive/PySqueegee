@@ -7,7 +7,7 @@ import uuid
 import os
 import re
 import subprocess
-import GPUtil
+#import GPUtil
 
 from datetime import datetime
 from tabulate import tabulate
@@ -384,7 +384,7 @@ def get_network(report_name):
     write_report("\n   Total Sent: " + get_size(net_io.bytes_sent), report_name)
     write_report("\n   Total Received: " + get_size(net_io.bytes_recv), report_name)
 
-def get_gpu():
+""" def get_gpu(): # Broken in Python 3.12
     print("="*20, " GPU Details (NVIDIA ONLY)")
     gpus = GPUtil.getGPUs()
     if gpus != []:
@@ -414,7 +414,7 @@ def get_gpu():
                                         "temperature", "uuid")))
     else:
         print("NVIDIA GPU not present.")
-
+ """
 
 def get_running_processes(report_name):
     print("="*40, " CURRENT RUNNING PROCESSES")
@@ -486,7 +486,7 @@ def main():
     get_installed_apps(report_file)
     get_disk(report_file)
     get_network(report_file)
-    get_gpu() # NVIDIA ONLY
+    #get_gpu() # NVIDIA ONLY
     get_running_processes(report_file)
     get_env_var(report_file)
     
