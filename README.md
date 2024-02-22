@@ -10,3 +10,11 @@ ______      _____
 </pre>
 
 PySqueegee Readme
+
+PySqueegee is the Python version of a Windows Cleaner Reporter called Squeegee (a toold to help you clear windows... get it?)
+
+This project was built as a 'teach myself Python'. Is it perfect? No. Does it work? Yes. 
+
+This will scan your Windows system for all the core information and write a report. That report will can help you identify what is installed, running processes, what services are running, memory, disk and network usage and a few other data points. 
+
+Python 3. 
