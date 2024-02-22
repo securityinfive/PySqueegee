@@ -157,40 +157,43 @@ def get_services(report_name):
     svcs = list(psutil.win_service_iter())
 
     for svc in svcs:
-        svc_info = psutil.win_service_get(svc.name()).as_dict()
-        svc_data = {}
-        for svc_key, svc_item in svc_info.items():
-            if svc_info['status'] == 'running':
-                match svc_key:
-                    case 'display_name':
-                        svc_dis_name = svc_item
-                        svc_data["Display Name"] = svc_item
-                    case 'binpath':
-                        svc_bin = svc_item
-                    case 'start_type':
-                        svc_startup = svc_item
-                        svc_data["Startup"] = svc_item
-                    case 'description':
-                        svc_descr = svc_item
-                        svc_data["Description"] = svc_item
-                    case 'status':
-                        svc_status = svc_item
+        try:
+            svc_info = psutil.win_service_get(svc.name()).as_dict()
+            svc_data = {}
+            for svc_key, svc_item in svc_info.items():
+                if svc_info['status'] == 'running':
+                    match svc_key:
+                        case 'display_name':
+                            svc_dis_name = svc_item
+                            svc_data["Display Name"] = svc_item
+                        case 'binpath':
+                            svc_bin = svc_item
+                        case 'start_type':
+                            svc_startup = svc_item
+                            svc_data["Startup"] = svc_item
+                        case 'description':
+                            svc_descr = svc_item
+                            svc_data["Description"] = svc_item
+                        case 'status':
+                            svc_status = svc_item
 
-        print(f"Name - ", svc_dis_name)
-        print(f"Binpath - ", svc_bin)
-        print(f"Startup - ", svc_startup)
-        print(f"Status - ", svc_status)
-        print(f"Description - ", svc_descr)
-        print("#"*70)
-        
-        write_report("Name - " + svc_dis_name, report_name)
-        write_report("\nBinpath - " + svc_bin, report_name)
-        write_report("\nStartup - " + svc_startup, report_name)
-        write_report("\nStatus - " + svc_status, report_name)
-        write_report("\nDescription - " + str(svc_descr), report_name)
-        write_report("\n" + "-"*50, report_name)
-        write_report("\n", report_name)
+            print(f"Name - ", svc_dis_name)
+            print(f"Binpath - ", svc_bin)
+            print(f"Startup - ", svc_startup)
+            print(f"Status - ", svc_status)
+            print(f"Description - ", svc_descr)
+            print("#"*70)
+            
+            write_report("Name - " + svc_dis_name, report_name)
+            write_report("\nBinpath - " + svc_bin, report_name)
+            write_report("\nStartup - " + svc_startup, report_name)
+            write_report("\nStatus - " + svc_status, report_name)
+            write_report("\nDescription - " + str(svc_descr), report_name)
+            write_report("\n" + "-"*50, report_name)
+            write_report("\n", report_name)
 
+        except:
+            pass
 def win_registry(report_name):
     print_header("START UP APPS")
     write_header("STARTUP APPS", report_name)
@@ -258,8 +261,9 @@ def read_reg(reg_choice, reg_choice2, report_name):
     write_report(tabulate(reg_info.items(), headers=["App Name", "Path"]), report_name)
     write_report("\n\n", report_name)
     
-def get_installed_apps():
+def get_installed_apps(report_name):
     print_header("INSTALLED APPS")
+    write_header("INSTALLED APPS", report_name)
     # importing the module 
    
     # traverse the software list 
@@ -271,10 +275,13 @@ def get_installed_apps():
         
         # arrange the string 
         for i in range(len(a)): 
-            print(a.split("\\r\\r\\n")[6:][i]) 
+            print(a.split("\\r\\r\\n")[6:][i])
+            write_report(a.split("\\r\\r\\n")[6:][i], report_name) 
+            write_report("\n", report_name)
     
     except IndexError as e: 
         print("All Done")
+        write_report("\n", report_name)
 
 def get_size(bytes, suffix="B"):
     """
@@ -289,16 +296,26 @@ def get_size(bytes, suffix="B"):
             return f"{bytes:.2f}{unit}{suffix}"
         bytes /= factor
 
-def get_disk():
+def get_disk(report_name):
     print("="*20, " DISK INFO")
     print("="*40, "Disk Information", "="*40)
     print("Partitions and Usage:")
+    
+    write_header("DISK INFO", report_name)
+    write_report("Partitions and Usage\n", report_name)
+    write_report("~"*50, report_name)
+    write_report("\n", report_name)
+    
     # get all disk partitions
     partitions = psutil.disk_partitions()
     for partition in partitions:
         print(f"=== Device: {partition.device} ===")
         print(f"  Mountpoint: {partition.mountpoint}")
         print(f"  File system type: {partition.fstype}")
+        
+        write_report("\n~~~ Device: " + partition.device + "~~~", report_name)
+        write_report("\n   Mountpoint: " + partition.mountpoint, report_name)
+        write_report("\n   File System: " + partition.fstype, report_name)
         try:
             partition_usage = psutil.disk_usage(partition.mountpoint)
         except PermissionError:
@@ -309,32 +326,63 @@ def get_disk():
         print(f"  Used: {get_size(partition_usage.used)}")
         print(f"  Free: {get_size(partition_usage.free)}")
         print(f"  Used %: {partition_usage.percent}%")
+
+        write_report("\n   Total Size: " + get_size(partition_usage.total), report_name)
+        write_report("\n   Used: " + get_size(partition_usage.used), report_name)
+        write_report("\n   Free: " + get_size(partition_usage.free), report_name)
+        write_report("\n   Used %: " + get_size(partition_usage.percent), report_name)
+        
     # get IO statistics since boot
     disk_io = psutil.disk_io_counters()
     print(f"  Total read: {get_size(disk_io.read_bytes)}")
     print(f"  Total write: {get_size(disk_io.write_bytes)}")
 
-def get_network():
-    print("="*40, "Network Information", "="*40)
+    write_report("\n   Total read: " + get_size(disk_io.read_bytes), report_name)
+    write_report("\n   Total write: " + get_size(disk_io.write_bytes), report_name)
+
+def get_network(report_name):
+    print("="*40, "NETWORK INFORMATION", "="*40)
+    write_header("NETWORK INFORMATION", report_name)
+
     # get all network interfaces (virtual and physical)
     if_addrs = psutil.net_if_addrs()
+    #print(if_addrs)
     for interface_name, interface_addresses in if_addrs.items():
+
         for address in interface_addresses:
-            if str(address.family) == 'AddressFamily.AF_INET':
+            # if str(address.family) == 'AddressFamily.AF_INET':   
+            # elif str(address.family) == 'AddressFamily.AF_PACKET': 
+            if address.family == 2:
                 print(f"=== Interface: {interface_name} ===")
                 print(f"  IP Address: {address.address}")
                 print(f"  Netmask: {address.netmask}")
                 print(f"  Broadcast IP: {address.broadcast}")
-            elif str(address.family) == 'AddressFamily.AF_PACKET':
+                
+                write_report("\n=== Interface: " + interface_name + " ===", report_name)
+                write_report("\n   IP Address: " + address.address, report_name)
+                write_report("\n   Netmask: " + str(address.netmask), report_name)
+                write_report("\n   Broadcast IP: " + str(address.broadcast), report_name)
+            """ elif address.family == 23:
                 print(f"=== Interface: {interface_name} ===")
                 print(f"  MAC Address: {address.address}")
                 print(f"  Netmask: {address.netmask}")
                 print(f"  Broadcast MAC: {address.broadcast}")
+
+                write_report("\n=== Interface: {interface_name} ===", report_name)
+                write_report("\n    MAC Address: " + address.address, report_name)
+                write_report("\n    Netmask: " + str(address.netmask), report_name)
+                write_report("\n    Broadcast MAC: " + str(address.broadcast), report_name) """
+
     # get IO statistics since boot
     net_io = psutil.net_io_counters()
     print("="*20, " NETWORK TRAFFIC SINCE LAST BOOT")
+    write_report("\n" + "~"*50 + "\nNETWORK TRAFFIC SINCE LAST BOOT", report_name)
+    
     print(f"  Total Sent: {get_size(net_io.bytes_sent)}")
     print(f"  Total Received: {get_size(net_io.bytes_recv)}")
+
+    write_report("\n   Total Sent: " + get_size(net_io.bytes_sent), report_name)
+    write_report("\n   Total Received: " + get_size(net_io.bytes_recv), report_name)
 
 def get_gpu():
     print("="*20, " GPU Details (NVIDIA ONLY)")
@@ -368,8 +416,11 @@ def get_gpu():
         print("NVIDIA GPU not present.")
 
 
-def get_running_processes():
+def get_running_processes(report_name):
     print("="*40, " CURRENT RUNNING PROCESSES")
+
+    write_header("CURRENT RUNNING PROCESSES", report_name)
+
     proc_list = []
     for proc in psutil.process_iter():
         try:
@@ -378,24 +429,44 @@ def get_running_processes():
             pass
     
     print(tabulate(sorted(proc_list), headers=("Process Name" , "PID", "Memory", "Status")))
+    
+    write_report(tabulate(sorted(proc_list), headers=("Process Name" , "PID", "Memory", "Status")), report_name)
+    write_report("\n" + "~"*70 + "\n", report_name)
+
     print("="*40, " END CURRENT RUNNING PROCESSES")
 
-def get_env_var():
+def get_env_var(report_name):
     print("="*20, " ENVIRONMENT VARIABLES")
+
+    write_header("ENVIRONMENT VARIABLES", report_name)
+
     sys_hold = os.getenv('HOMEDRIVE')
-    print(sys_hold)
-    sys_hold = os.getenv('PathExt')
-    print(sys_hold)
+    print(f"Home Drive: " + sys_hold)
+    write_report("Home Drive:" + sys_hold, report_name)
+    
     sys_hold = os.getenv('SystemDrive')
-    print(sys_hold)
+    print(f"System Drive: " + sys_hold)
+    write_report("\nSystem Drive:" + sys_hold, report_name)
+    
+    sys_hold = os.getenv('PathExt')
+    print(f"Path Extensions: " + sys_hold)
+    write_report("\nPath Extensions:" + sys_hold, report_name)
+    
     sys_hold = os.getenv('SystemRoot')
-    print(sys_hold)
+    print(f"System Root: " + sys_hold)
+    write_report("\nSystem Root:" + sys_hold, report_name)
+    
     sys_hold = os.getenv('USERDOMAIN')
-    print(sys_hold)
+    print(f"User Domain: " + sys_hold)
+    write_report("\nUser Domain:" + sys_hold, report_name)
+    
     sys_hold = os.getenv('COMPUTERNAME')
-    print(sys_hold)
+    print(f"Computer Name: " + sys_hold)
+    write_report("\nComputer Name:" + sys_hold, report_name)
+    
     sys_hold = os.getenv('OS')
-    print(sys_hold)
+    print(f"OS: " + sys_hold)
+    write_report("\nOS:" + sys_hold, report_name)
 
 def get_time():
     now_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
@@ -407,17 +478,21 @@ def write_report(writeline, report_name):
 def main():
     write_report('\n\nScans started.\n', report_file)
     
-    #get_platform(report_file)
-    #get_os(report_file)
-    #get_services(report_file)
+    get_platform(report_file)
+    get_os(report_file)
+    get_services(report_file)
     #cpu_read(report_file)
     win_registry(report_file)
-    #get_installed_apps()
-    #get_disk()
-    #get_network()
-    #get_gpu() # NVIDIA ONLY
-    #get_running_processes()
-    #get_env_var()
+    get_installed_apps(report_file)
+    get_disk(report_file)
+    get_network(report_file)
+    get_gpu() # NVIDIA ONLY
+    get_running_processes(report_file)
+    get_env_var(report_file)
+    
+    print("************** SCAN COMPLETE *****************")
+
+    write_report("\n\n+++++++++++++++ SCAN COMPLETE +++++++++++++++", report_file)
     report_file.close()
     
 if __name__ == "__main__":
